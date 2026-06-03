@@ -7,12 +7,12 @@ Covers HomeCoursesViewSet (ADR 0028) registered at:
 Supports pagination (ADR 0032), filtering, and ordering (ADR 0033).
 """
 
-from ...exceptions import ApiError
+from ...resources.base import BaseResource
 
 _BASE_PATH = "/api/contentstore/v4/home/courses"
 
 
-class HomeResourceV4:
+class HomeResourceV4(BaseResource):
     """
     Provides access to the Studio home courses API (v4).
 
@@ -40,7 +40,7 @@ class HomeResourceV4:
     """
 
     def __init__(self, session, studio_base):
-        self._session = session
+        super().__init__(session)
         self._base_url = studio_base.rstrip("/") + _BASE_PATH
 
     def courses(
@@ -121,10 +121,3 @@ class HomeResourceV4:
         if page_size is not None:
             params["page_size"] = page_size
         return self._get(f"{self._base_url}/", params=params or None)
-
-    def _get(self, url, params=None):
-        """Make a GET request and return the parsed JSON response."""
-        response = self._session.get(url, params=params)
-        if not response.ok:
-            raise ApiError(response.status_code, response.text)
-        return response.json()

@@ -31,7 +31,7 @@ class JwtAuth(requests.auth.AuthBase):
         session = requests.Session()
         session.auth = auth
         response = session.get(
-            "https://lms.example.com/api/contentstore/v1/home/courses/"
+            "https://studio.example.com/api/contentstore/v4/home/courses/"
         )
     """
 

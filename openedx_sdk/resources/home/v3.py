@@ -7,12 +7,12 @@ Covers HomeViewSet (ADR 0028) registered at:
   GET /api/contentstore/v3/home/libraries/ → libraries list
 """
 
-from ...exceptions import ApiError
+from ...resources.base import BaseResource
 
 _BASE_PATH = "/api/contentstore/v3/home"
 
 
-class HomeResourceV3:
+class HomeResourceV3(BaseResource):
     """
     Provides access to the Studio home API endpoints (v3).
 
@@ -38,7 +38,7 @@ class HomeResourceV3:
     """
 
     def __init__(self, session, studio_base):
-        self._session = session
+        super().__init__(session)
         self._base_url = studio_base.rstrip("/") + _BASE_PATH
 
     def get(self, org=None):
@@ -138,10 +138,3 @@ class HomeResourceV3:
         if is_migrated is not None:
             params["is_migrated"] = "true" if is_migrated else "false"
         return self._get(f"{self._base_url}/libraries/", params=params or None)
-
-    def _get(self, url, params=None):
-        """Make a GET request and return the parsed JSON response."""
-        response = self._session.get(url, params=params)
-        if not response.ok:
-            raise ApiError(response.status_code, response.text)
-        return response.json()
