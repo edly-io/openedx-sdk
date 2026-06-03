@@ -1,0 +1,26 @@
+# Configuration for PII annotation checks.
+# This is a pure Python SDK with no Django models or user data storage,
+# so no PII annotations are expected.
+source_path: openedx_sdk
+report_path: pii_report
+safelist_path: .pii_safe_list.yml
+extensions:
+    python:
+        - py
+annotations:
+    ".. no_pii:":
+    "pii_group":
+        - ".. pii:":
+        - ".. pii_types:":
+            choices:
+              - id
+              - name
+              - username
+              - email_address
+              - other
+        - ".. pii_retirement:":
+            choices:
+              - retained
+              - local_api
+              - consumer_api
+              - third_party
