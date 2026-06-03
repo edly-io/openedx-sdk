@@ -55,6 +55,19 @@ Resources are grouped by area, then version (e.g. ``client.home.v4``):
     active = client.home.v4.courses(active_only=True, ordering="display_name")
     results = client.home.v4.courses(search="intro")
 
+    # v3 — courses with active + archived split (no pagination)
+    data = client.home.v3.courses(org="edX")
+    for course in data["courses"]:
+        print(course["display_name"])
+    for course in data["archived_courses"]:
+        print(course["display_name"], "(archived)")
+
+    # v3 — libraries
+    libs = client.home.v3.libraries()
+    migrated = client.home.v3.libraries(is_migrated=True)
+
+    # v3 — aggregated home context (courses + libraries + Studio settings)
+    home = client.home.v3.get()
 
 Authentication
 **************
@@ -73,6 +86,12 @@ Available Resources
 | ``home.v4``| ``courses(org, search, ordering,``               | ``GET /api/contentstore/v4/home/courses/``     |
 |            | ``active_only, archived_only, page, page_size)`` |                                                |
 +------------+--------------------------------------------------+------------------------------------------------+
+| ``home.v3``| ``courses(org)``                                 | ``GET /api/contentstore/v3/home/courses/``     |
++------------+--------------------------------------------------+------------------------------------------------+
+| ``home.v3``| ``libraries(org, is_migrated)``                  | ``GET /api/contentstore/v3/home/libraries/``   |
++------------+--------------------------------------------------+------------------------------------------------+
+| ``home.v3``| ``get(org)``                                     | ``GET /api/contentstore/v3/home/``             |
++------------+--------------------------------------------------+------------------------------------------------+
 
 **v4 response** follows the ADR 0032 pagination envelope:
 
@@ -85,6 +104,16 @@ Available Resources
             "courses": [{"course_key": "...", "is_active": true, ...}],
             "in_process_course_actions": []
         }
+    }
+
+**v3 courses response** (no pagination, active + archived split):
+
+.. code-block:: python
+
+    {
+        "courses": [{"course_key": "...", ...}],
+        "archived_courses": [...],
+        "in_process_course_actions": []
     }
 
 Error Handling

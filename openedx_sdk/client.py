@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import requests
 
 from .auth import JwtAuth
+from .resources.home.v3 import HomeResourceV3
 from .resources.home.v4 import HomeResourceV4
 
 
@@ -41,6 +42,10 @@ class OpenEdxClient:
         for course in data["results"]["courses"]:
             print(course["display_name"], course["is_active"])
 
+        # v3 — courses (active + archived, no pagination)
+        data = client.home.v3.courses(org="edX")
+        for course in data["courses"]:
+            print(course["display_name"])
     """
 
     def __init__(self, lms_base, client_id, client_secret, *, studio_base=None, timeout=30):
@@ -58,6 +63,7 @@ class OpenEdxClient:
         self._session.request = self._request_with_timeout
 
         self.home = SimpleNamespace(
+            v3=HomeResourceV3(self._session, self._studio_base),
             v4=HomeResourceV4(self._session, self._studio_base),
         )
 

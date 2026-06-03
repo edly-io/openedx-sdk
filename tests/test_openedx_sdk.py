@@ -24,6 +24,9 @@ FAKE_REFRESH_TOKEN = "fake-refresh-token"
 # URL constants
 # ---------------------------------------------------------------------------
 
+V3_HOME_URL = f"{STUDIO_BASE}/api/contentstore/v3/home/"
+V3_COURSES_URL = f"{STUDIO_BASE}/api/contentstore/v3/home/courses/"
+V3_LIBRARIES_URL = f"{STUDIO_BASE}/api/contentstore/v3/home/libraries/"
 V4_COURSES_URL = f"{STUDIO_BASE}/api/contentstore/v4/home/courses/"
 
 # ---------------------------------------------------------------------------
@@ -39,6 +42,27 @@ def _token_response(
         "refresh_token": refresh_token,
         "expires_in": expires_in,
         "token_type": "JWT",
+    }
+
+
+def _v3_courses_response(courses=None, archived=None):
+    """Return a v3 courses response (active + archived, no pagination)."""
+    return {
+        "courses": courses
+        or [
+            {
+                "course_key": "course-v1:edX+E2E-101+course",
+                "display_name": "E2E Test Course",
+                "lms_link": "//lms.example.com/courses/course-v1:edX+E2E-101+course",
+                "number": "E2E-101",
+                "org": "edX",
+                "rerun_link": "/course_rerun/course-v1:edX+E2E-101+course",
+                "run": "course",
+                "url": "/course/course-v1:edX+E2E-101+course",
+            }
+        ],
+        "archived_courses": archived or [],
+        "in_process_course_actions": [],
     }
 
 
@@ -144,6 +168,110 @@ class TestJwtAuth:
 
         assert token == "re-auth-token"
         assert len(rsps.calls) == 3
+
+
+# ---------------------------------------------------------------------------
+# HomeResourceV3 tests
+# ---------------------------------------------------------------------------
+
+
+class TestHomeResourceV3:
+    """Tests for the HomeResourceV3 (v3 endpoint — no pagination)."""
+
+    @rsps.activate
+    def test_courses_returns_active_and_archived(self):
+        rsps.add(rsps.POST, TOKEN_URL, json=_token_response())
+        rsps.add(rsps.GET, V3_COURSES_URL, json=_v3_courses_response())
+
+        client = OpenEdxClient(
+            LMS_BASE, CLIENT_ID, CLIENT_SECRET, studio_base=STUDIO_BASE
+        )
+        result = client.home.v3.courses()
+
+        assert "courses" in result
+        assert "archived_courses" in result
+        assert "in_process_course_actions" in result
+        assert result["courses"][0]["course_key"] == "course-v1:edX+E2E-101+course"
+
+    @rsps.activate
+    def test_courses_passes_org_filter(self):
+        rsps.add(rsps.POST, TOKEN_URL, json=_token_response())
+        rsps.add(
+            rsps.GET,
+            V3_COURSES_URL,
+            match=[matchers.query_param_matcher({"org": "edX"})],
+            json=_v3_courses_response(),
+        )
+
+        client = OpenEdxClient(
+            LMS_BASE, CLIENT_ID, CLIENT_SECRET, studio_base=STUDIO_BASE
+        )
+        result = client.home.v3.courses(org="edX")
+
+        assert "courses" in result
+
+    @rsps.activate
+    def test_libraries_returns_list(self):
+        rsps.add(rsps.POST, TOKEN_URL, json=_token_response())
+        rsps.add(rsps.GET, V3_LIBRARIES_URL, json={"libraries": []})
+
+        client = OpenEdxClient(
+            LMS_BASE, CLIENT_ID, CLIENT_SECRET, studio_base=STUDIO_BASE
+        )
+        result = client.home.v3.libraries()
+
+        assert "libraries" in result
+
+    @rsps.activate
+    def test_libraries_passes_is_migrated_filter(self):
+        rsps.add(rsps.POST, TOKEN_URL, json=_token_response())
+        rsps.add(
+            rsps.GET,
+            V3_LIBRARIES_URL,
+            match=[matchers.query_param_matcher({"is_migrated": "true"})],
+            json={"libraries": []},
+        )
+
+        client = OpenEdxClient(
+            LMS_BASE, CLIENT_ID, CLIENT_SECRET, studio_base=STUDIO_BASE
+        )
+        result = client.home.v3.libraries(is_migrated=True)
+
+        assert "libraries" in result
+
+    @rsps.activate
+    def test_get_returns_aggregated_context(self):
+        rsps.add(rsps.POST, TOKEN_URL, json=_token_response())
+        rsps.add(
+            rsps.GET,
+            V3_HOME_URL,
+            json={
+                "courses": [],
+                "archived_courses": [],
+                "libraries": [],
+                "studio_name": "Studio",
+            },
+        )
+
+        client = OpenEdxClient(
+            LMS_BASE, CLIENT_ID, CLIENT_SECRET, studio_base=STUDIO_BASE
+        )
+        result = client.home.v3.get()
+
+        assert "studio_name" in result
+
+    @rsps.activate
+    def test_courses_raises_api_error_on_non_2xx(self):
+        rsps.add(rsps.POST, TOKEN_URL, json=_token_response())
+        rsps.add(rsps.GET, V3_COURSES_URL, status=401, body="Unauthorized")
+
+        client = OpenEdxClient(
+            LMS_BASE, CLIENT_ID, CLIENT_SECRET, studio_base=STUDIO_BASE
+        )
+        with pytest.raises(ApiError) as exc_info:
+            client.home.v3.courses()
+
+        assert exc_info.value.status_code == 401
 
 
 # ---------------------------------------------------------------------------
