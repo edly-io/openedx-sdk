@@ -43,6 +43,7 @@ class JwtAuth(requests.auth.AuthBase):
         self._client_secret = client_secret
         self._access_token = None
         self._refresh_token = None
+        self._token_type = "JWT"
         self._expires_at = 0
 
     # ------------------------------------------------------------------
@@ -51,7 +52,7 @@ class JwtAuth(requests.auth.AuthBase):
 
     def __call__(self, r):
         """Attach the JWT Authorization header to the request."""
-        r.headers["Authorization"] = f"JWT {self._get_token()}"
+        r.headers["Authorization"] = f"{self._token_type} {self._get_token()}"
         return r
 
     # ------------------------------------------------------------------
@@ -110,5 +111,6 @@ class JwtAuth(requests.auth.AuthBase):
         data = response.json()
         self._access_token = data["access_token"]
         self._refresh_token = data.get("refresh_token")
+        self._token_type = data.get("token_type", "JWT")
         # expires_in is in seconds; fall back to 3600 (1 hour) if absent.
         self._expires_at = time.time() + data.get("expires_in", 3600)

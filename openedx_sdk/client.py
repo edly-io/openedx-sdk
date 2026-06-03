@@ -7,8 +7,20 @@ from types import SimpleNamespace
 import requests
 
 from .auth import JwtAuth
-from .resources.home.v3 import HomeResourceV3
-from .resources.home.v4 import HomeResourceV4
+from .resources import HomeResourceV3, HomeResourceV4
+
+
+class _TimeoutSession(requests.Session):
+    """Session subclass that applies a default timeout to every request."""
+
+    def __init__(self, timeout):
+        super().__init__()
+        self._timeout = timeout
+
+    def request(self, *args, **kwargs):
+        """Set default timeout then delegate to the standard Session."""
+        kwargs.setdefault("timeout", self._timeout)
+        return super().request(*args, **kwargs)
 
 
 class OpenEdxClient:
@@ -51,26 +63,15 @@ class OpenEdxClient:
     def __init__(self, lms_base, client_id, client_secret, *, studio_base=None, timeout=30):
         self._lms_base = lms_base.rstrip("/")
         self._studio_base = (studio_base or lms_base).rstrip("/")
-        self._timeout = timeout
 
-        self._session = requests.Session()
+        self._session = _TimeoutSession(timeout)
         self._session.auth = JwtAuth(
             lms_base=self._lms_base,
             client_id=client_id,
             client_secret=client_secret,
         )
-        # Apply default timeout to all requests via an adapter hook.
-        self._session.request = self._request_with_timeout
 
         self.home = SimpleNamespace(
             v3=HomeResourceV3(self._session, self._studio_base),
             v4=HomeResourceV4(self._session, self._studio_base),
         )
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
-
-    def _request_with_timeout(self, method, url, **kwargs):
-        kwargs.setdefault("timeout", self._timeout)
-        return requests.Session.request(self._session, method, url, **kwargs)
