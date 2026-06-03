@@ -63,3 +63,6 @@ docs/openedx_sdk.*.rst
 # Private requirements
 requirements/private.in
 requirements/private.txt
+
+# PII check report output
+pii_report/

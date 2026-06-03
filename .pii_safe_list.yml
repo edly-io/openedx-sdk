@@ -1,0 +1,2 @@
+# Safelist for PII annotation checks.
+# This SDK does not store or process PII — it is a pure API client library.
