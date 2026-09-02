@@ -1,0 +1,37 @@
+name: Publish package to npm
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: javascript
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: setup node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+          cache-dependency-path: javascript/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Validate
+        run: npm run validate
+
+      - name: Build package
+        run: npm run build
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -7,7 +7,7 @@ version: 2
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
-  configuration: docs/conf.py
+  configuration: python/docs/conf.py
   fail_on_warning: true
 
 # Set the version of python needed to build these docs.
@@ -18,10 +18,10 @@ build:
 
 python:
   install:
-    - requirements: requirements/doc.txt
+    - requirements: python/requirements/doc.txt
 
     # This will pip install this repo into the python environment
     # if you are using this in a repo that is not pip installable
     # then you should remove the following two lines.
     - method: pip
-      path: .
+      path: python
