@@ -55,14 +55,21 @@ output/*.html
 output/*/index.html
 
 # Sphinx
-docs/_build
-docs/modules.rst
-docs/openedx_sdk.rst
-docs/openedx_sdk.*.rst
+python/docs/_build
+python/docs/modules.rst
+python/docs/openedx_sdk.rst
+python/docs/openedx_sdk.*.rst
 
 # Private requirements
-requirements/private.in
-requirements/private.txt
+python/requirements/private.in
+python/requirements/private.txt
 
 # PII check report output
 pii_report/
+
+# JavaScript
+node_modules/
+javascript/dist/
+javascript/coverage/
+*.tsbuildinfo
+.npm

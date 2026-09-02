@@ -9,4 +9,14 @@ coverage:
         enabled: yes
         target: 100%
 
+flags:
+  python:
+    paths:
+      - python/
+    carryforward: true
+  javascript:
+    paths:
+      - javascript/
+    carryforward: true
+
 comment: false

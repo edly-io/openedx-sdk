@@ -1,16 +1,19 @@
-name: Python CI
+name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   pull_request:
     branches:
       - "**"
 
 jobs:
-  run_tests:
-    name: tests
+  python:
+    name: python tests
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: python
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -39,5 +42,46 @@ jobs:
         uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          flags: unittests
+          flags: python
+          fail_ci_if_error: false
+
+  javascript:
+    name: javascript tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: javascript
+    strategy:
+      matrix:
+        node-version: ["18", "20"]
+    steps:
+      - uses: actions/checkout@v6
+      - name: setup node
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: javascript/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run Tests
+        run: npm run test:coverage
+
+      - name: Build
+        run: npm run build
+
+      - name: Run coverage
+        if: matrix.node-version == '20'
+        uses: codecov/codecov-action@v6
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: javascript
           fail_ci_if_error: false

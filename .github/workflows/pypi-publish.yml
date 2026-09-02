@@ -17,9 +17,11 @@ jobs:
           python-version: 3.12
 
       - name: Install pip
+        working-directory: python
         run: pip install -r requirements/pip.txt
 
       - name: Build package
+        working-directory: python
         run: python setup.py sdist bdist_wheel
 
       - name: Publish to PyPi
@@ -27,3 +29,4 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_UPLOAD_TOKEN }}
+          packages-dir: python/dist
